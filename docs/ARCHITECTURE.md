@@ -42,6 +42,14 @@ Discord / LINE / HTTP client
 - `agreement` 可比較兩位標註者，或同一標註者的 `initial`／`retest` 輪次。
 - `finalize` 要求指定輪次全部完成，才會產生可供切分與訓練的標註 JSONL。
 
+## RSS 資料收集
+
+- `newsveribot-feeds` 只讀取 manifest 中明確允許的 RSS/Atom endpoint。
+- feed URL 與每次 redirect 都經過公開 IP 驗證，並限制協定、內容類型、大小與 redirect 次數。
+- 只保留 feed 提供的標題與摘要，不抓文章頁全文。
+- 文章網址會移除常見追蹤參數；內容以 SHA-256 去重並記錄 provenance。
+- 同事件跨媒體報導仍需人工設定相同 `group_id`，才可防止後續資料切分洩漏。
+
 ## 安全限制
 
 - URL 僅接受 HTTP(S)，禁止帳密資訊與非標準 URL。

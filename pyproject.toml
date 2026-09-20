@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
   "beautifulsoup4>=4.13,<5",
+  "defusedxml>=0.7,<1",
   "discord.py>=2.5,<3",
   "fastapi>=0.116,<1",
   "httpx>=0.28,<1",
@@ -24,6 +25,7 @@ newsveribot-api = "newsveribot.api:run"
 newsveribot-annotate = "newsveribot.annotation_app:run"
 newsveribot-claims = "newsveribot.claim_cli:run"
 newsveribot-discord = "newsveribot.discord_bot:run"
+newsveribot-feeds = "newsveribot.feed_cli:run"
 
 [dependency-groups]
 dev = [
@@ -32,6 +34,7 @@ dev = [
   "pytest-asyncio>=1.1,<2",
   "ruff>=0.12,<1",
   "types-beautifulsoup4>=4.12,<5",
+  "types-defusedxml>=0.7,<1",
 ]
 
 [tool.hatch.build.targets.wheel]

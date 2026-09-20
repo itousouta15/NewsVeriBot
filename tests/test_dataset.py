@@ -6,6 +6,7 @@ from newsveribot.dataset import (
     ArticleRecord,
     ClaimAnnotation,
     DatasetError,
+    audit_annotations,
     blind_sample_annotations,
     prepare_annotations,
     read_annotation_csv,
@@ -89,3 +90,12 @@ def test_blind_sample_is_deterministic_and_removes_answers() -> None:
     second = blind_sample_annotations(records, size=5, seed=42)
     assert [record.id for record in first] == [record.id for record in second]
     assert all(record.label is None and record.rationale is None for record in first)
+
+
+def test_audit_reports_duplicate_text_without_exposing_it() -> None:
+    records = [_annotation(1, 1), _annotation(2, 1), _annotation(3, 0)]
+    records[1] = records[1].model_copy(update={"text": records[0].text})
+    report = audit_annotations(records)
+    assert report.duplicate_records == 1
+    assert report.duplicate_groups[0].record_ids == [records[0].id, records[1].id]
+    assert len(report.duplicate_groups[0].text_sha256) == 64

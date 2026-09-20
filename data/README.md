@@ -12,13 +12,17 @@
 
 ## 建議格式
 
-原始文章使用 JSON Lines，每列必須記錄來源與使用依據：
+原始文章使用 JSON Lines，每列必須記錄來源與使用依據；`published_at` 與 `content_sha256` 由 RSS 收集器補上：
 
 ```json
-{"article_id":"news_001","group_id":"event_001","title":"範例","text":"文章全文","source_url":"https://example.com/news/1","source_name":"範例來源","retrieved_at":"2026-09-20T12:00:00+08:00","rights_note":"僅供研究標註，不重新散布"}
+{"article_id":"news_001","group_id":"event_001","title":"範例","text":"RSS 標題與摘要","source_url":"https://example.com/news/1","source_name":"範例來源","retrieved_at":"2026-09-20T12:00:00+08:00","published_at":"2026-09-20T10:00:00+08:00","content_sha256":"64位十六進位雜湊","rights_note":"僅供研究標註，不重新散布"}
 ```
 
 `group_id` 代表同一事件或高度相關報導。未填時會使用 `article_id`，但正式資料應盡可能人工整理事件群組。
+
+`config/feed_sources.jsonl` 只列入提供公開 syndication feed 的來源。收集器僅保存 feed 本身提供的標題與摘要，不繞過付費牆、不抓文章全文，並移除常見追蹤參數。來源停止提供 feed 或回傳錯誤時會記錄在 collection report，不會改用未確認的替代網址。
+
+若某來源的 RSS 摘要固定為截斷內容，可在 manifest 設定 `"include_summary": false`，只保留完整標題。collection report 會列出各來源實際納入的文章數。
 
 主張標註也使用 JSON Lines：
 
@@ -36,6 +40,7 @@
 
 ```text
 articles.jsonl
+  <- newsveribot-feeds（公開 RSS/Atom 標題與摘要）
   -> newsveribot-claims prepare
   -> claim_annotations.jsonl（人工填 label/rationale）
      或 newsveribot-annotate -> annotation_events.jsonl -> finalize

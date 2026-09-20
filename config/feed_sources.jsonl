@@ -1,0 +1,3 @@
+{"feed_url":"https://feeds.bbci.co.uk/zhongwen/trad/rss.xml","max_items":20,"name":"BBC 中文","rights_note":"僅使用公開 RSS 標題與摘要作研究標註；著作權歸原發布者所有","source_id":"bbc_zh"}
+{"feed_url":"https://tfc-taiwan.org.tw/feed/","max_items":10,"name":"台灣事實查核中心","rights_note":"僅使用公開 RSS 標題與摘要作研究標註；著作權歸原發布者所有","source_id":"tfc_tw"}
+{"feed_url":"https://news.ltn.com.tw/rss/all.xml","include_summary":false,"max_items":20,"name":"自由時報","rights_note":"僅使用公開 RSS 標題作研究標註；著作權歸原發布者所有","source_id":"ltn_tw"}

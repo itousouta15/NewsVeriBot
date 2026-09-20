@@ -61,12 +61,23 @@ Discord adapter 透過 `NEWSVERIBOT_API_BASE_URL` 呼叫 API，因此應先啟�
 
 ## 模型 A 資料與 baseline
 
-先準備符合 `data/README.md` 格式的文章 JSONL：
+可從經確認的公開 RSS/Atom 來源收集標題與摘要：
+
+```bash
+uv run newsveribot-feeds \
+  --manifest config/feed_sources.jsonl \
+  --output data/raw/rss_articles.jsonl \
+  --report data/raw/rss_collection.report.json
+```
+
+收集器不下載文章全文，會保留來源網址、發布／擷取時間、權利註記與 SHA-256，並依內容雜湊去重。接著將文章 JSONL 切成待標註句子：
 
 ```bash
 uv run newsveribot-claims prepare \
-  --input data/raw/articles.jsonl \
+  --input data/raw/rss_articles.jsonl \
   --output data/interim/claim_annotations.jsonl
+uv run newsveribot-claims audit \
+  --input data/interim/claim_annotations.jsonl
 ```
 
 完成 `label` 與 `rationale` 後，驗證並依 `group_id` 切分：
@@ -151,4 +162,4 @@ uv run pytest
 
 目前提供規則式與 TF-IDF 主張偵測 baseline；語義模型 A 與模型 B 尚未訓練。實驗結果必須由固定資料切分與評估腳本產生，不會在程式碼中預填計畫書的目標分數。
 
-資料規範見 `data/README.md`，系統邊界見 `docs/ARCHITECTURE.md`，標註規則見 `docs/ANNOTATION_GUIDELINE.md`。
+資料規範見 `data/README.md`，系統邊界見 `docs/ARCHITECTURE.md`，標註規則見 `docs/ANNOTATION_GUIDELINE.md`，第一批資料統計見 `docs/DATASET_PILOT.md`。

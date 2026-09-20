@@ -4,6 +4,7 @@ import random
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 from datetime import datetime
+from hashlib import sha256
 from pathlib import Path
 from typing import Literal, Self
 
@@ -38,6 +39,8 @@ class ArticleRecord(BaseModel):
     source_url: AnyHttpUrl
     source_name: str = Field(min_length=1)
     retrieved_at: datetime
+    published_at: datetime | None = None
+    content_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     rights_note: str = Field(min_length=1)
 
 
@@ -67,6 +70,21 @@ class DatasetSummary(BaseModel):
     positive: int
     negative: int
     unlabeled: int
+
+
+class DuplicateSentenceGroup(BaseModel):
+    text_sha256: str
+    record_ids: list[str]
+
+
+class AnnotationAudit(BaseModel):
+    summary: DatasetSummary
+    minimum_characters: int
+    maximum_characters: int
+    mean_characters: float
+    questions: int
+    duplicate_records: int
+    duplicate_groups: list[DuplicateSentenceGroup]
 
 
 def read_jsonl[RecordT: BaseModel](path: Path, model: type[RecordT]) -> list[RecordT]:
@@ -214,6 +232,33 @@ def validate_annotations(
         positive=labels[1],
         negative=labels[0],
         unlabeled=labels[None],
+    )
+
+
+def audit_annotations(records: list[ClaimAnnotation]) -> AnnotationAudit:
+    summary = validate_annotations(records, require_labels=False)
+    text_groups: dict[str, list[str]] = defaultdict(list)
+    lengths: list[int] = []
+    questions = 0
+    for record in records:
+        normalized = "".join(record.text.lower().split())
+        text_hash = sha256(normalized.encode()).hexdigest()
+        text_groups[text_hash].append(record.id)
+        lengths.append(len(record.text))
+        questions += int(record.text.endswith(("?", "？")))
+    duplicate_groups = [
+        DuplicateSentenceGroup(text_sha256=text_hash, record_ids=sorted(record_ids))
+        for text_hash, record_ids in sorted(text_groups.items())
+        if len(record_ids) > 1
+    ]
+    return AnnotationAudit(
+        summary=summary,
+        minimum_characters=min(lengths),
+        maximum_characters=max(lengths),
+        mean_characters=sum(lengths) / len(lengths),
+        questions=questions,
+        duplicate_records=sum(len(group.record_ids) - 1 for group in duplicate_groups),
+        duplicate_groups=duplicate_groups,
     )
 
 

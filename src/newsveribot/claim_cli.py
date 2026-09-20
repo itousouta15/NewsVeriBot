@@ -9,6 +9,7 @@ from newsveribot.dataset import (
     ArticleRecord,
     ClaimAnnotation,
     DatasetError,
+    audit_annotations,
     blind_sample_annotations,
     prepare_annotations,
     read_annotation_csv,
@@ -32,6 +33,9 @@ def _build_parser() -> argparse.ArgumentParser:
     validate = subparsers.add_parser("validate", help="驗證標註 JSONL")
     validate.add_argument("--input", type=Path, required=True)
     validate.add_argument("--allow-unlabeled", action="store_true")
+
+    audit = subparsers.add_parser("audit", help="檢查長度、問句與跨文章重複句")
+    audit.add_argument("--input", type=Path, required=True)
 
     export_csv = subparsers.add_parser("export-csv", help="將標註 JSONL 匯出為 Excel 相容 CSV")
     export_csv.add_argument("--input", type=Path, required=True)
@@ -95,6 +99,12 @@ def _execute(args: argparse.Namespace) -> None:
         records = read_jsonl(args.input, ClaimAnnotation)
         summary = validate_annotations(records, require_labels=not args.allow_unlabeled)
         _print_json(summary.model_dump())
+        return
+
+    if args.command == "audit":
+        records = read_jsonl(args.input, ClaimAnnotation)
+        audit_report = audit_annotations(records)
+        _print_json(audit_report.model_dump())
         return
 
     if args.command == "export-csv":
