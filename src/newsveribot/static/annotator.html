@@ -17,6 +17,7 @@
       --card: #fffdf7;
     }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     body {
       margin: 0;
       min-height: 100vh;
@@ -88,20 +89,23 @@
       <div id="progressText">0 / 0</div>
     </div>
     <article id="workspace">
-      <div class="eyebrow"><span id="claimId">載入中</span><span id="groupId"></span></div>
-      <div id="claimText">正在讀取待標註句子…</div>
-      <a id="sourceLink" target="_blank" rel="noreferrer">查看原始來源</a>
-      <div class="decision-grid">
-        <button type="button" data-label="1">1　值得查核</button>
-        <button type="button" data-label="0">0　不值得查核</button>
+      <div id="annotationPanel">
+        <div class="eyebrow"><span id="claimId">載入中</span><span id="groupId"></span></div>
+        <div id="claimText">正在讀取待標註句子…</div>
+        <a id="sourceLink" target="_blank" rel="noreferrer">查看原始來源</a>
+        <div class="decision-grid">
+          <button type="button" data-label="1">1　值得查核</button>
+          <button type="button" data-label="0">0　不值得查核</button>
+        </div>
+        <label for="rationale">判斷理由（選填）</label>
+        <textarea id="rationale" maxlength="1000" placeholder="爭議案例可補充可驗證元素，或說明為何屬於意見、情緒、背景句。"></textarea>
+        <div class="footer-row">
+          <span class="hint">快捷鍵：1 / 0 選擇，Ctrl + Enter 儲存</span>
+          <button type="button" id="saveButton" disabled>儲存並前往下一筆</button>
+        </div>
+        <div id="message" role="status"></div>
       </div>
-      <label for="rationale">判斷理由（選填）</label>
-      <textarea id="rationale" maxlength="1000" placeholder="爭議案例可補充可驗證元素，或說明為何屬於意見、情緒、背景句。"></textarea>
-      <div class="footer-row">
-        <span class="hint">快捷鍵：1 / 0 選擇，Ctrl + Enter 儲存</span>
-        <button type="button" id="saveButton" disabled>儲存並前往下一筆</button>
-      </div>
-      <div id="message" role="status"></div>
+      <div id="donePanel" class="done" hidden><h2>本輪標註完成</h2><p>可切換標註輪次，或執行 agreement／finalize。</p></div>
     </article>
   </main>
   <script>
@@ -147,9 +151,12 @@
       rationale.value = '';
       document.querySelectorAll('[data-label]').forEach((button) => button.classList.remove('selected'));
       if (!data.claim) {
-        $('#workspace').innerHTML = '<div class="done"><h2>本輪標註完成</h2><p>請執行 agreement 或 finalize 進行下一步。</p></div>';
+        $('#annotationPanel').hidden = true;
+        $('#donePanel').hidden = false;
         return;
       }
+      $('#donePanel').hidden = true;
+      $('#annotationPanel').hidden = false;
       $('#claimId').textContent = data.claim.id;
       $('#groupId').textContent = `group / ${data.claim.group_id}`;
       $('#claimText').textContent = data.claim.text;
