@@ -1,0 +1,73 @@
+# NewsVeriBot
+
+NewsVeriBot 是以證據為中心的繁體中文事實查核輔助系統。它會從文字或網頁中找出值得查核的主張，查詢既有 ClaimReview 資料，並將最相關的查核報告排在前面。
+
+系統不會替使用者宣判內容真假。查無資料只代表目前沒有找到相關查核報告。
+
+## 目前功能
+
+- `POST /v1/analyze` 接受純文字或公開 HTTP(S) URL。
+- URL 擷取會限制協定、重新導向、回應大小，並阻擋私有與保留 IP。
+- 可解釋的規則式主張偵測 baseline。
+- Google Fact Check Tools API adapter；沒有 API key 時安全降級。
+- 字元 n-gram 與數字一致性的重排 baseline。
+- Discord `/verify` 指令 adapter。
+- 單元測試、Ruff、mypy 與 GitHub Actions CI。
+
+## 快速開始
+
+需求：Python 3.12 與 [uv](https://docs.astral.sh/uv/)。
+
+```bash
+uv sync --dev
+cp .env.example .env
+uv run uvicorn newsveribot.api:app --reload
+```
+
+Windows PowerShell 可使用：
+
+```powershell
+Copy-Item .env.example .env
+uv run uvicorn newsveribot.api:app --reload
+```
+
+健康檢查：
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+文字分析：
+
+```bash
+curl -X POST http://127.0.0.1:8000/v1/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"text":"衛生單位宣布，2026年1月起將實施新的疫苗政策。"}'
+```
+
+只能提供 `text` 或 `url` 其中一個。設定 `GOOGLE_FACT_CHECK_API_KEY` 後，分析結果才會包含線上查核候選。
+
+## Discord Bot
+
+在 `.env` 設定 `DISCORD_BOT_TOKEN`。開發時可設定 `DISCORD_GUILD_ID`，讓 slash command 立即同步至單一伺服器。
+
+```bash
+uv run newsveribot-discord
+```
+
+Discord adapter 透過 `NEWSVERIBOT_API_BASE_URL` 呼叫 API，因此應先啟動 API。
+
+## 品質檢查
+
+```bash
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy
+uv run pytest
+```
+
+## 研究狀態
+
+目前的主張偵測與重排皆為 baseline，不是已訓練完成的模型 A/B。實驗結果必須由固定資料切分與評估腳本產生，不會在程式碼中預填計畫書的目標分數。
+
+資料規範見 `data/README.md`，系統邊界見 `docs/ARCHITECTURE.md`，標註規則見 `docs/ANNOTATION_GUIDELINE.md`。
