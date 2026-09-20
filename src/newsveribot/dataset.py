@@ -271,5 +271,22 @@ def split_annotations(
     return splits
 
 
+def blind_sample_annotations(
+    records: list[ClaimAnnotation],
+    *,
+    size: int,
+    seed: int,
+) -> list[ClaimAnnotation]:
+    validate_annotations(records, require_labels=False)
+    if size < 1:
+        raise DatasetError("sample size 必須大於 0")
+    if size > len(records):
+        raise DatasetError("sample size 不可超過資料筆數")
+    selected = random.Random(seed).sample(records, size)
+    blinded = [record.model_copy(update={"label": None, "rationale": None}) for record in selected]
+    blinded.sort(key=lambda record: record.id)
+    return blinded
+
+
 def _split_pairs() -> tuple[tuple[str, str], ...]:
     return (("train", "dev"), ("train", "test"), ("dev", "test"))

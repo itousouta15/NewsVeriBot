@@ -21,6 +21,7 @@ dependencies = [
 
 [project.scripts]
 newsveribot-api = "newsveribot.api:run"
+newsveribot-annotate = "newsveribot.annotation_app:run"
 newsveribot-claims = "newsveribot.claim_cli:run"
 newsveribot-discord = "newsveribot.discord_bot:run"
 

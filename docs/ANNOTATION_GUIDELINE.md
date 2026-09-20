@@ -34,3 +34,11 @@
 - test set 鎖定後不可用於閾值或超參數調整。
 - 至少 10% 樣本由第二標註者複核；若只有一人，應盲重標並記錄為 intra-rater reliability。
 - 所有修改都保留 guideline version 與變更理由。
+
+## 建議輪次
+
+1. `initial`：完成第一輪全部標註。
+2. `retest`：間隔至少數日後，以 `sample` 清除既有答案並盲重標抽樣或全部資料。
+3. 執行 `agreement`，記錄重疊樣本數、observed agreement 與 Cohen's kappa。
+4. `adjudicated`：重新檢視衝突案例並留下最終理由。
+5. 只有 `finalize` 產生的資料能進入 train/dev/test 切分。

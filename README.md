@@ -98,6 +98,46 @@ uv run newsveribot-claims train \
 
 將 `NEWSVERIBOT_CLAIM_MODEL_PATH` 指向模型檔後，API 啟動時會載入它。Joblib 可以執行序列化物件，只能載入自己訓練或可信來源提供的檔案。
 
+## 本機標註工作台
+
+`prepare` 產生待標註 JSONL 後，可啟動瀏覽器工作台：
+
+```bash
+uv run newsveribot-annotate \
+  --claims data/interim/claim_annotations.jsonl \
+  --events data/interim/annotation_events.jsonl
+```
+
+開啟 <http://127.0.0.1:8010>。工作台預設只監聽 loopback，沒有登入機制，不應公開部署。每次儲存都會附加事件，不會覆蓋先前判斷。
+
+同一人可用 `initial` 與 `retest` 兩輪進行盲重標，再計算 intra-rater Cohen's kappa：
+
+```bash
+uv run newsveribot-claims sample \
+  --input data/interim/claim_annotations.jsonl \
+  --output data/interim/retest_sample.jsonl \
+  --size 50 --seed 42
+uv run newsveribot-annotate \
+  --claims data/interim/retest_sample.jsonl \
+  --events data/interim/annotation_events.jsonl
+# 在網頁將輪次改成 retest
+uv run newsveribot-claims agreement \
+  --claims data/interim/claim_annotations.jsonl \
+  --events data/interim/annotation_events.jsonl \
+  --annotator-a researcher_1 --pass-a initial \
+  --annotator-b researcher_1 --pass-b retest
+```
+
+若有衝突，使用新的 `adjudicated` 輪次完成最終判斷，之後匯整成訓練資料：
+
+```bash
+uv run newsveribot-claims finalize \
+  --claims data/interim/claim_annotations.jsonl \
+  --events data/interim/annotation_events.jsonl \
+  --annotator researcher_1 --pass-id adjudicated \
+  --output data/interim/claim_annotations.final.jsonl
+```
+
 ## 品質檢查
 
 ```bash

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NewsVeriBot 標註工作台</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4efe4;
+      --ink: #17201c;
+      --muted: #68736c;
+      --line: #c8c0ae;
+      --green: #17624a;
+      --red: #a73a2d;
+      --gold: #d7a52a;
+      --card: #fffdf7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(90deg, transparent 49.8%, rgba(23, 32, 28, .05) 50%, transparent 50.2%),
+        var(--paper);
+      color: var(--ink);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+    header {
+      border-bottom: 1px solid var(--ink);
+      padding: 18px clamp(20px, 5vw, 72px);
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand { font: 700 clamp(24px, 4vw, 44px)/.95 Georgia, serif; letter-spacing: -.04em; }
+    .brand small { display: block; margin-top: 8px; font: 600 11px/1 sans-serif; letter-spacing: .18em; text-transform: uppercase; color: var(--green); }
+    .settings { display: flex; flex-wrap: wrap; gap: 10px; justify-content: end; }
+    label { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .06em; }
+    input, textarea {
+      width: 100%; border: 1px solid var(--line); border-radius: 0; background: var(--card);
+      color: var(--ink); font: inherit; padding: 11px 12px; outline: none;
+    }
+    input:focus, textarea:focus { border-color: var(--green); box-shadow: 3px 3px 0 var(--gold); }
+    .settings label { width: 150px; }
+    main { width: min(960px, calc(100% - 40px)); margin: 42px auto 80px; }
+    .progress-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; margin-bottom: 12px; }
+    .progress-track { height: 9px; border: 1px solid var(--ink); background: var(--card); }
+    .progress-bar { width: 0; height: 100%; background: var(--green); transition: width .25s ease; }
+    #progressText { font: 700 13px/1 monospace; }
+    article { position: relative; border: 1px solid var(--ink); background: var(--card); padding: clamp(24px, 6vw, 64px); box-shadow: 9px 9px 0 rgba(23, 32, 28, .14); }
+    .eyebrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--muted); font: 700 11px/1.4 monospace; text-transform: uppercase; }
+    #claimText { margin: 42px 0; font: 600 clamp(28px, 5vw, 50px)/1.35 Georgia, "Noto Serif TC", serif; letter-spacing: -.02em; }
+    #sourceLink { color: var(--green); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+    .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 30px 0 22px; }
+    button { min-height: 64px; border: 1px solid var(--ink); background: transparent; color: var(--ink); font: 800 16px/1 sans-serif; cursor: pointer; transition: transform .12s, background .12s, color .12s; }
+    button:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--ink); }
+    button[data-label="1"].selected { background: var(--green); color: white; }
+    button[data-label="0"].selected { background: var(--red); color: white; }
+    textarea { min-height: 120px; resize: vertical; margin-top: 8px; }
+    .footer-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 14px; }
+    #saveButton { min-height: 48px; padding: 0 28px; background: var(--ink); color: var(--paper); }
+    #saveButton:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; transform: none; }
+    #message { min-height: 24px; color: var(--red); font-size: 13px; }
+    .done { text-align: center; padding: 72px 20px; }
+    .done h2 { font: 700 42px/1 Georgia, serif; }
+    .hint { color: var(--muted); font-size: 12px; }
+    @media (max-width: 680px) {
+      header { align-items: start; flex-direction: column; }
+      .settings, .settings label { width: 100%; justify-content: start; }
+      .decision-grid { grid-template-columns: 1fr; }
+      article { box-shadow: 5px 5px 0 rgba(23, 32, 28, .14); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">NewsVeriBot<small>Claim annotation desk</small></div>
+    <div class="settings">
+      <label>標註者 ID<input id="annotator" value="researcher_1" maxlength="64"></label>
+      <label>標註輪次<input id="passId" value="initial" maxlength="64"></label>
+    </div>
+  </header>
+  <main>
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+      <div id="progressText">0 / 0</div>
+    </div>
+    <article id="workspace">
+      <div class="eyebrow"><span id="claimId">載入中</span><span id="groupId"></span></div>
+      <div id="claimText">正在讀取待標註句子…</div>
+      <a id="sourceLink" target="_blank" rel="noreferrer">查看原始來源</a>
+      <div class="decision-grid">
+        <button type="button" data-label="1">1　值得查核</button>
+        <button type="button" data-label="0">0　不值得查核</button>
+      </div>
+      <label for="rationale">判斷理由</label>
+      <textarea id="rationale" maxlength="1000" placeholder="指出可驗證元素，或說明為何屬於意見、情緒、背景句。"></textarea>
+      <div class="footer-row">
+        <span class="hint">快捷鍵：1 / 0 選擇，Ctrl + Enter 儲存</span>
+        <button type="button" id="saveButton" disabled>儲存並前往下一筆</button>
+      </div>
+      <div id="message" role="status"></div>
+    </article>
+  </main>
+  <script>
+    const state = { claim: null, label: null };
+    const $ = (selector) => document.querySelector(selector);
+    const annotator = $('#annotator');
+    const passId = $('#passId');
+    const rationale = $('#rationale');
+    const saveButton = $('#saveButton');
+    const message = $('#message');
+
+    function identity() {
+      return { annotator_id: annotator.value.trim(), pass_id: passId.value.trim() };
+    }
+    function validIdentity() {
+      return /^[A-Za-z0-9_.-]+$/.test(annotator.value) && /^[A-Za-z0-9_.-]+$/.test(passId.value);
+    }
+    function selectLabel(label) {
+      state.label = label;
+      document.querySelectorAll('[data-label]').forEach((button) => {
+        button.classList.toggle('selected', Number(button.dataset.label) === label);
+      });
+      updateSaveState();
+    }
+    function updateSaveState() {
+      saveButton.disabled = !state.claim || state.label === null || rationale.value.trim().length < 3 || !validIdentity();
+    }
+    async function loadNext() {
+      message.textContent = '';
+      if (!validIdentity()) {
+        message.textContent = '標註者 ID 與輪次只能使用英數字、底線、連字號或句點。';
+        return;
+      }
+      const params = new URLSearchParams(identity());
+      const response = await fetch(`/api/next?${params}`);
+      if (!response.ok) throw new Error((await response.json()).detail || '讀取失敗');
+      const data = await response.json();
+      const percent = data.stats.total ? data.stats.completed / data.stats.total * 100 : 0;
+      $('#progressBar').style.width = `${percent}%`;
+      $('#progressText').textContent = `${data.stats.completed} / ${data.stats.total}`;
+      state.claim = data.claim;
+      state.label = null;
+      rationale.value = '';
+      document.querySelectorAll('[data-label]').forEach((button) => button.classList.remove('selected'));
+      if (!data.claim) {
+        $('#workspace').innerHTML = '<div class="done"><h2>本輪標註完成</h2><p>請執行 agreement 或 finalize 進行下一步。</p></div>';
+        return;
+      }
+      $('#claimId').textContent = data.claim.id;
+      $('#groupId').textContent = `group / ${data.claim.group_id}`;
+      $('#claimText').textContent = data.claim.text;
+      $('#sourceLink').href = data.claim.source_url;
+      updateSaveState();
+    }
+    async function save() {
+      saveButton.disabled = true;
+      message.textContent = '儲存中…';
+      const response = await fetch('/api/decisions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...identity(), claim_id: state.claim.id, label: state.label, rationale: rationale.value.trim()
+        })
+      });
+      if (!response.ok) {
+        message.textContent = (await response.json()).detail || '儲存失敗';
+        updateSaveState();
+        return;
+      }
+      await loadNext();
+    }
+    document.querySelectorAll('[data-label]').forEach((button) => button.addEventListener('click', () => selectLabel(Number(button.dataset.label))));
+    [annotator, passId].forEach((input) => input.addEventListener('change', loadNext));
+    rationale.addEventListener('input', updateSaveState);
+    saveButton.addEventListener('click', save);
+    document.addEventListener('keydown', (event) => {
+      if (document.activeElement !== rationale && (event.key === '1' || event.key === '0')) selectLabel(Number(event.key));
+      if (event.ctrlKey && event.key === 'Enter' && !saveButton.disabled) save();
+    });
+    loadNext().catch((error) => { message.textContent = error.message; });
+  </script>
+</body>
+</html>

@@ -34,6 +34,14 @@ Discord / LINE / HTTP client
 - 未設定 `NEWSVERIBOT_CLAIM_MODEL_PATH` 時使用透明規則 baseline；設定後載入本機訓練的 TF-IDF artifact。
 - Joblib artifact 只能來自可信來源，因為反序列化不具備沙箱隔離。
 
+## 標註工作台
+
+- `newsveribot-annotate` 是獨立的本機 FastAPI 應用程式，不掛在正式分析 API。
+- claim JSONL 視為唯讀；每次判斷以 append-only event 保存，修訂不刪除歷史。
+- 顯示順序由 seed 與 claim ID 決定，避免所有標註者都受原文章順序影響。
+- `agreement` 可比較兩位標註者，或同一標註者的 `initial`／`retest` 輪次。
+- `finalize` 要求指定輪次全部完成，才會產生可供切分與訓練的標註 JSONL。
+
 ## 安全限制
 
 - URL 僅接受 HTTP(S)，禁止帳密資訊與非標準 URL。

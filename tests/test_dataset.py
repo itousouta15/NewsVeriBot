@@ -6,6 +6,7 @@ from newsveribot.dataset import (
     ArticleRecord,
     ClaimAnnotation,
     DatasetError,
+    blind_sample_annotations,
     prepare_annotations,
     read_annotation_csv,
     read_jsonl,
@@ -80,3 +81,11 @@ def test_validation_rejects_missing_rationale() -> None:
     record = _annotation(1, 1).model_copy(update={"rationale": None})
     with pytest.raises(DatasetError, match="rationale"):
         validate_annotations([record], require_labels=True)
+
+
+def test_blind_sample_is_deterministic_and_removes_answers() -> None:
+    records = [_annotation(group, label) for group in range(6) for label in (0, 1)]
+    first = blind_sample_annotations(records, size=5, seed=42)
+    second = blind_sample_annotations(records, size=5, seed=42)
+    assert [record.id for record in first] == [record.id for record in second]
+    assert all(record.label is None and record.rationale is None for record in first)

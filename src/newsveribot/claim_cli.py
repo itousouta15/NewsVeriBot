@@ -3,11 +3,13 @@ import json
 import sys
 from pathlib import Path
 
+from newsveribot.annotation import AnnotationStore
 from newsveribot.claim_model import save_artifact, train_baseline
 from newsveribot.dataset import (
     ArticleRecord,
     ClaimAnnotation,
     DatasetError,
+    blind_sample_annotations,
     prepare_annotations,
     read_annotation_csv,
     read_jsonl,
@@ -46,12 +48,34 @@ def _build_parser() -> argparse.ArgumentParser:
     split.add_argument("--train-ratio", type=float, default=0.8)
     split.add_argument("--dev-ratio", type=float, default=0.1)
 
+    sample = subparsers.add_parser("sample", help="建立不含原標籤的可重現抽樣")
+    sample.add_argument("--input", type=Path, required=True)
+    sample.add_argument("--output", type=Path, required=True)
+    sample.add_argument("--size", type=int, required=True)
+    sample.add_argument("--seed", type=int, default=42)
+
     train = subparsers.add_parser("train", help="訓練 TF-IDF + Logistic Regression baseline")
     train.add_argument("--data-dir", type=Path, required=True)
     train.add_argument("--model-output", type=Path, required=True)
     train.add_argument("--report-output", type=Path, required=True)
     train.add_argument("--seed", type=int, default=42)
     train.add_argument("--target-recall", type=float, default=0.82)
+
+    agreement = subparsers.add_parser("agreement", help="計算兩組標註的 Cohen's kappa")
+    agreement.add_argument("--claims", type=Path, required=True)
+    agreement.add_argument("--events", type=Path, required=True)
+    agreement.add_argument("--annotator-a", required=True)
+    agreement.add_argument("--pass-a", default="initial")
+    agreement.add_argument("--annotator-b", required=True)
+    agreement.add_argument("--pass-b", default="initial")
+
+    finalize = subparsers.add_parser("finalize", help="將指定標註輪次匯整成訓練 JSONL")
+    finalize.add_argument("--claims", type=Path, required=True)
+    finalize.add_argument("--events", type=Path, required=True)
+    finalize.add_argument("--annotator", required=True)
+    finalize.add_argument("--pass-id", default="initial")
+    finalize.add_argument("--output", type=Path, required=True)
+    finalize.add_argument("--allow-incomplete", action="store_true")
     return parser
 
 
@@ -98,13 +122,20 @@ def _execute(args: argparse.Namespace) -> None:
         _print_json({name: len(split_records) for name, split_records in splits.items()})
         return
 
+    if args.command == "sample":
+        records = read_jsonl(args.input, ClaimAnnotation)
+        sampled = blind_sample_annotations(records, size=args.size, seed=args.seed)
+        write_jsonl(args.output, sampled)
+        _print_json({"records": len(sampled), "output": str(args.output), "seed": args.seed})
+        return
+
     if args.command == "train":
         if not 0 < args.target_recall <= 1:
             raise DatasetError("target-recall 必須介於 0 與 1 之間")
         train_records = read_jsonl(args.data_dir / "train.jsonl", ClaimAnnotation)
         dev_records = read_jsonl(args.data_dir / "dev.jsonl", ClaimAnnotation)
         test_records = read_jsonl(args.data_dir / "test.jsonl", ClaimAnnotation)
-        artifact, report = train_baseline(
+        artifact, baseline_report = train_baseline(
             train_records,
             dev_records,
             test_records,
@@ -114,10 +145,32 @@ def _execute(args: argparse.Namespace) -> None:
         save_artifact(args.model_output, artifact)
         args.report_output.parent.mkdir(parents=True, exist_ok=True)
         args.report_output.write_text(
-            report.model_dump_json(indent=2),
+            baseline_report.model_dump_json(indent=2),
             encoding="utf-8",
         )
-        _print_json(report.model_dump(mode="json"))
+        _print_json(baseline_report.model_dump(mode="json"))
+        return
+
+    if args.command == "agreement":
+        store = AnnotationStore(args.claims, args.events)
+        agreement_report = store.agreement(
+            annotator_a=args.annotator_a,
+            pass_a=args.pass_a,
+            annotator_b=args.annotator_b,
+            pass_b=args.pass_b,
+        )
+        _print_json(agreement_report.model_dump())
+        return
+
+    if args.command == "finalize":
+        store = AnnotationStore(args.claims, args.events)
+        finalized = store.finalize(
+            annotator_id=args.annotator,
+            pass_id=args.pass_id,
+            output_path=args.output,
+            require_complete=not args.allow_incomplete,
+        )
+        _print_json({"records": len(finalized), "output": str(args.output)})
         return
 
     raise DatasetError(f"未知指令：{args.command}")
