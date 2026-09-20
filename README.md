@@ -80,13 +80,13 @@ uv run newsveribot-claims audit \
   --input data/interim/claim_annotations.jsonl
 ```
 
-完成 `label` 與 `rationale` 後，驗證並依 `group_id` 切分：
+完成 `label` 後，驗證並依 `group_id` 切分；`rationale` 為選填，建議用於爭議或裁決案例：
 
 ```bash
 uv run newsveribot-claims export-csv \
   --input data/interim/claim_annotations.jsonl \
   --output data/interim/claim_annotations.csv
-# 在 Excel 或 Google Sheets 填寫 label 與 rationale 後：
+# 在 Excel 或 Google Sheets 填寫 label，並視需要補充 rationale 後：
 uv run newsveribot-claims import-csv \
   --input data/interim/claim_annotations.csv \
   --output data/interim/claim_annotations.jsonl

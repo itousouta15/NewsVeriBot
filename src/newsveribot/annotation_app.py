@@ -21,7 +21,7 @@ class DecisionRequest(BaseModel):
     annotator_id: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_.-]+$")
     pass_id: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_.-]+$")
     label: Literal[0, 1]
-    rationale: str = Field(min_length=3, max_length=1_000)
+    rationale: str | None = Field(default=None, min_length=3, max_length=1_000)
 
 
 class NextAnnotationResponse(BaseModel):

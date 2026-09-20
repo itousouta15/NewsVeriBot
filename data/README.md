@@ -34,7 +34,7 @@
 
 待標註 JSONL 可用 `newsveribot-claims export-csv` 轉成帶 UTF-8 BOM 的 CSV，在 Excel 或 Google Sheets 填寫後，再用 `import-csv` 驗證並轉回 JSONL。研究流程一律以驗證後的 JSONL 為準。
 
-瀏覽器工作台不直接修改 claim JSONL，而是將每次判斷附加至 `annotation_events.jsonl`。事件包含 claim、標註者、輪次、標籤、理由、準則版本與 UTC 時間，可保留修訂歷史並計算一致性。使用 `finalize` 選定最終輪次後才產生訓練資料。
+瀏覽器工作台不直接修改 claim JSONL，而是將每次判斷附加至 `annotation_events.jsonl`。事件包含 claim、標註者、輪次、標籤、選填理由、準則版本與 UTC 時間，可保留修訂歷史並計算一致性。使用 `finalize` 選定最終輪次後才產生訓練資料。
 
 ## 模型 A 流程
 
@@ -42,7 +42,7 @@
 articles.jsonl
   <- newsveribot-feeds（公開 RSS/Atom 標題與摘要）
   -> newsveribot-claims prepare
-  -> claim_annotations.jsonl（人工填 label/rationale）
+  -> claim_annotations.jsonl（人工填 label，rationale 選填）
      或 newsveribot-annotate -> annotation_events.jsonl -> finalize
   -> newsveribot-claims validate
   -> newsveribot-claims split

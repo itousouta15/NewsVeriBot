@@ -33,7 +33,7 @@
 - 依文章或事件切分 train/dev/test，禁止將同篇文章的句子分散到不同集合。
 - test set 鎖定後不可用於閾值或超參數調整。
 - 至少 10% 樣本由第二標註者複核；若只有一人，應盲重標並記錄為 intra-rater reliability。
-- 所有修改都保留 guideline version 與變更理由。
+- 所有修改都保留 guideline version；爭議與裁決案例建議補充理由。
 
 ## 建議輪次
 

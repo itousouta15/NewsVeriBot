@@ -95,8 +95,8 @@
         <button type="button" data-label="1">1　值得查核</button>
         <button type="button" data-label="0">0　不值得查核</button>
       </div>
-      <label for="rationale">判斷理由</label>
-      <textarea id="rationale" maxlength="1000" placeholder="指出可驗證元素，或說明為何屬於意見、情緒、背景句。"></textarea>
+      <label for="rationale">判斷理由（選填）</label>
+      <textarea id="rationale" maxlength="1000" placeholder="爭議案例可補充可驗證元素，或說明為何屬於意見、情緒、背景句。"></textarea>
       <div class="footer-row">
         <span class="hint">快捷鍵：1 / 0 選擇，Ctrl + Enter 儲存</span>
         <button type="button" id="saveButton" disabled>儲存並前往下一筆</button>
@@ -127,7 +127,7 @@
       updateSaveState();
     }
     function updateSaveState() {
-      saveButton.disabled = !state.claim || state.label === null || rationale.value.trim().length < 3 || !validIdentity();
+      saveButton.disabled = !state.claim || state.label === null || !validIdentity();
     }
     async function loadNext() {
       message.textContent = '';
@@ -163,7 +163,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...identity(), claim_id: state.claim.id, label: state.label, rationale: rationale.value.trim()
+          ...identity(), claim_id: state.claim.id, label: state.label, rationale: rationale.value.trim() || null
         })
       });
       if (!response.ok) {

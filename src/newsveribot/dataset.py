@@ -221,8 +221,6 @@ def validate_annotations(
         sentence_keys.add(sentence_key)
         if require_labels and record.label is None:
             raise DatasetError(f"尚未標註：{record.id}")
-        if record.label is not None and not record.rationale:
-            raise DatasetError(f"已標註資料缺少 rationale：{record.id}")
         labels[record.label] += 1
         groups.add(record.group_id)
 

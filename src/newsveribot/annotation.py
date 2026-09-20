@@ -23,7 +23,7 @@ class AnnotationDecision(BaseModel):
         default="initial", min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_.-]+$"
     )
     label: Literal[0, 1]
-    rationale: str = Field(min_length=3, max_length=1_000)
+    rationale: str | None = Field(default=None, min_length=3, max_length=1_000)
     guideline_version: str = Field(default="1.0", min_length=1)
     annotated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
@@ -84,7 +84,7 @@ class AnnotationStore:
         annotator_id: str,
         pass_id: str,
         label: Literal[0, 1],
-        rationale: str,
+        rationale: str | None,
     ) -> AnnotationDecision:
         if claim_id not in self._claims:
             raise DatasetError(f"找不到 claim：{claim_id}")
@@ -94,7 +94,7 @@ class AnnotationStore:
             annotator_id=annotator_id,
             pass_id=pass_id,
             label=label,
-            rationale=rationale.strip(),
+            rationale=(rationale.strip() or None) if rationale is not None else None,
             guideline_version=claim.guideline_version,
         )
         with self._lock:

@@ -1,11 +1,8 @@
 from pathlib import Path
 
-import pytest
-
 from newsveribot.dataset import (
     ArticleRecord,
     ClaimAnnotation,
-    DatasetError,
     audit_annotations,
     blind_sample_annotations,
     prepare_annotations,
@@ -78,10 +75,9 @@ def test_split_keeps_groups_isolated() -> None:
     assert sum(len(split_records) for split_records in splits.values()) == len(records)
 
 
-def test_validation_rejects_missing_rationale() -> None:
+def test_validation_allows_missing_rationale() -> None:
     record = _annotation(1, 1).model_copy(update={"rationale": None})
-    with pytest.raises(DatasetError, match="rationale"):
-        validate_annotations([record], require_labels=True)
+    assert validate_annotations([record], require_labels=True).positive == 1
 
 
 def test_blind_sample_is_deterministic_and_removes_answers() -> None:

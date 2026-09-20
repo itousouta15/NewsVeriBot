@@ -127,7 +127,6 @@ async def test_annotation_api_returns_next_and_saves_decision(tmp_path: Path) ->
                 "annotator_id": "researcher",
                 "pass_id": "initial",
                 "label": 1,
-                "rationale": "包含具體日期與政策宣稱",
             },
         )
         next_response = await client.get(
@@ -139,5 +138,6 @@ async def test_annotation_api_returns_next_and_saves_decision(tmp_path: Path) ->
     assert "NewsVeriBot 標註工作台" in page_response.text
     assert first_response.status_code == 200
     assert save_response.status_code == 200
+    assert save_response.json()["rationale"] is None
     assert next_response.json()["stats"]["completed"] == 1
     assert next_response.json()["claim"]["id"] != claim["id"]
