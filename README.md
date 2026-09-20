@@ -11,6 +11,8 @@ NewsVeriBot 是以證據為中心的繁體中文事實查核輔助系統。它�
 - 可解釋的規則式主張偵測 baseline。
 - Google Fact Check Tools API adapter；沒有 API key 時安全降級。
 - 字元 n-gram 與數字一致性的重排 baseline。
+- 模型 A 的文章切句、標註驗證、group-aware split 與訓練 CLI。
+- 可載入 TF-IDF + Logistic Regression 模型；未設定時使用規則 baseline。
 - Discord `/verify` 指令 adapter。
 - 單元測試、Ruff、mypy 與 GitHub Actions CI。
 
@@ -57,6 +59,45 @@ uv run newsveribot-discord
 
 Discord adapter 透過 `NEWSVERIBOT_API_BASE_URL` 呼叫 API，因此應先啟動 API。
 
+## 模型 A 資料與 baseline
+
+先準備符合 `data/README.md` 格式的文章 JSONL：
+
+```bash
+uv run newsveribot-claims prepare \
+  --input data/raw/articles.jsonl \
+  --output data/interim/claim_annotations.jsonl
+```
+
+完成 `label` 與 `rationale` 後，驗證並依 `group_id` 切分：
+
+```bash
+uv run newsveribot-claims export-csv \
+  --input data/interim/claim_annotations.jsonl \
+  --output data/interim/claim_annotations.csv
+# 在 Excel 或 Google Sheets 填寫 label 與 rationale 後：
+uv run newsveribot-claims import-csv \
+  --input data/interim/claim_annotations.csv \
+  --output data/interim/claim_annotations.jsonl
+uv run newsveribot-claims validate --input data/interim/claim_annotations.jsonl
+uv run newsveribot-claims split \
+  --input data/interim/claim_annotations.jsonl \
+  --output-dir data/processed \
+  --seed 42
+```
+
+訓練 baseline：
+
+```bash
+uv run newsveribot-claims train \
+  --data-dir data/processed \
+  --model-output models/claim_detector.joblib \
+  --report-output reports/model_a_baseline.json \
+  --target-recall 0.82
+```
+
+將 `NEWSVERIBOT_CLAIM_MODEL_PATH` 指向模型檔後，API 啟動時會載入它。Joblib 可以執行序列化物件，只能載入自己訓練或可信來源提供的檔案。
+
 ## 品質檢查
 
 ```bash
@@ -68,6 +109,6 @@ uv run pytest
 
 ## 研究狀態
 
-目前的主張偵測與重排皆為 baseline，不是已訓練完成的模型 A/B。實驗結果必須由固定資料切分與評估腳本產生，不會在程式碼中預填計畫書的目標分數。
+目前提供規則式與 TF-IDF 主張偵測 baseline；語義模型 A 與模型 B 尚未訓練。實驗結果必須由固定資料切分與評估腳本產生，不會在程式碼中預填計畫書的目標分數。
 
 資料規範見 `data/README.md`，系統邊界見 `docs/ARCHITECTURE.md`，標註規則見 `docs/ANNOTATION_GUIDELINE.md`。

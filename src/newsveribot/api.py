@@ -8,7 +8,8 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from newsveribot import __version__
-from newsveribot.claims import RuleBasedClaimDetector
+from newsveribot.claim_model import SklearnClaimDetector
+from newsveribot.claims import ClaimDetector, RuleBasedClaimDetector
 from newsveribot.config import Settings, get_settings
 from newsveribot.extractor import ExtractionError, UrlExtractor
 from newsveribot.reranker import LexicalReranker
@@ -22,6 +23,11 @@ class Analyzer(Protocol):
 
 
 def build_service(settings: Settings, client: httpx.AsyncClient) -> AnalysisService:
+    detector: ClaimDetector
+    if settings.claim_model_path is None:
+        detector = RuleBasedClaimDetector()
+    else:
+        detector = SklearnClaimDetector(settings.claim_model_path)
     return AnalysisService(
         settings=settings,
         extractor=UrlExtractor(
@@ -30,7 +36,7 @@ def build_service(settings: Settings, client: httpx.AsyncClient) -> AnalysisServ
             max_article_chars=settings.max_article_chars,
             max_redirects=settings.max_redirects,
         ),
-        detector=RuleBasedClaimDetector(),
+        detector=detector,
         retriever=GoogleFactCheckClient(
             client,
             settings.fact_check_api_key,

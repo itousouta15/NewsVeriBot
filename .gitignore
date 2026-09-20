@@ -13,6 +13,9 @@ build/
 models/**/*.bin
 models/**/*.pt
 models/**/*.pkl
+models/**/*.joblib
+models/*
+!models/README.md
 data/raw/*
 data/interim/*
 data/processed/*

@@ -31,6 +31,8 @@ Discord / LINE / HTTP client
 - `FactCheckRetriever` 是可替換介面，後續可加入本地 ClaimReview 索引。
 - 模型 A 只需實作與 baseline 相同的 `detect` 介面即可替換。
 - 模型 B 只需實作與 baseline 相同的 `rank` 介面即可替換。
+- 未設定 `NEWSVERIBOT_CLAIM_MODEL_PATH` 時使用透明規則 baseline；設定後載入本機訓練的 TF-IDF artifact。
+- Joblib artifact 只能來自可信來源，因為反序列化不具備沙箱隔離。
 
 ## 安全限制
 

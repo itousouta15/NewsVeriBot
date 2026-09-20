@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -9,6 +10,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         env_prefix="NEWSVERIBOT_",
+        env_ignore_empty=True,
         extra="ignore",
     )
 
@@ -19,6 +21,7 @@ class Settings(BaseSettings):
     max_claims: int = Field(default=5, ge=1, le=20)
     max_redirects: int = Field(default=3, ge=0, le=10)
     fact_check_page_size: int = Field(default=20, ge=1, le=100)
+    claim_model_path: Path | None = None
 
     fact_check_api_key: SecretStr | None = Field(
         default=None,

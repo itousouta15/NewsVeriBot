@@ -13,12 +13,15 @@ dependencies = [
   "discord.py>=2.5,<3",
   "fastapi>=0.116,<1",
   "httpx>=0.28,<1",
+  "joblib>=1.5,<2",
   "pydantic-settings>=2.10,<3",
+  "scikit-learn>=1.7,<2",
   "uvicorn[standard]>=0.35,<1",
 ]
 
 [project.scripts]
 newsveribot-api = "newsveribot.api:run"
+newsveribot-claims = "newsveribot.claim_cli:run"
 newsveribot-discord = "newsveribot.discord_bot:run"
 
 [dependency-groups]
@@ -50,3 +53,7 @@ allowed-confusables = ["！", "？", "％", "：", "，", "（", "）", "；"]
 python_version = "3.12"
 strict = true
 packages = ["newsveribot"]
+
+[[tool.mypy.overrides]]
+module = ["joblib", "sklearn.*"]
+ignore_missing_imports = true

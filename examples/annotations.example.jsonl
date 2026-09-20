@@ -1,0 +1,2 @@
+{"article_id":"demo_001","group_id":"demo_event_001","guideline_version":"1.0","id":"demo_001_s0000","label":1,"rationale":"包含政府宣稱與明確日期，可由公告驗證","sentence_index":0,"source_url":"https://example.com/demo-001","text":"市府宣布2026年1月起增加交通補助。"}
+{"article_id":"demo_001","group_id":"demo_event_001","guideline_version":"1.0","id":"demo_001_s0001","label":0,"rationale":"主觀評價，不具有可操作的事實命題","sentence_index":1,"source_url":"https://example.com/demo-001","text":"這項政策很好。"}
