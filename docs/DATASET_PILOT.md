@@ -37,9 +37,9 @@
 - `data/interim/claim_annotations.jsonl`
 - `data/interim/pilot_50.jsonl`（固定 seed 42；50 句、35 個群組）
 - `data/interim/pilot_50_events.jsonl`（append-only 人工與 AI 標註事件）
-- `data/interim/pilot_50.ai_suggested.jsonl`（AI 初標：22 正例、28 負例）
+- `data/interim/pilot_50.ai_suggested.jsonl`（AI 初標：18 正例、32 負例）
 - `data/interim/pilot_50_ai_review.jsonl`（AI 初標的低信心人工複核清單）
-- `data/interim/pilot_50_review_claims.jsonl`（不顯示 AI 答案的 10 句盲審子集）
+- `data/interim/pilot_50_review_claims.jsonl`（不顯示 AI 答案的 8 句盲審子集）
 
 以上檔案均受 `.gitignore` 排除，避免重新散布來源內容。AI 初標使用獨立的
 `ai_assistant/suggestion` 身份，不能冒充人工 gold labels，也不能在未經人工複核前當作研究結果。

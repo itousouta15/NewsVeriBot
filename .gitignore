@@ -21,3 +21,4 @@ data/interim/*
 data/processed/*
 !data/**/.gitkeep
 !data/README.md
+reports/*.json
