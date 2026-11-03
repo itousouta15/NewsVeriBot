@@ -209,6 +209,7 @@ def validate_annotations(
 
     ids: set[str] = set()
     sentence_keys: set[tuple[str, int]] = set()
+    article_groups: dict[str, str] = {}
     labels: Counter[int | None] = Counter()
     groups: set[str] = set()
     for record in records:
@@ -219,6 +220,12 @@ def validate_annotations(
         if sentence_key in sentence_keys:
             raise DatasetError(f"文章句子重複：{record.article_id}#{record.sentence_index}")
         sentence_keys.add(sentence_key)
+        previous_group = article_groups.setdefault(record.article_id, record.group_id)
+        if previous_group != record.group_id:
+            raise DatasetError(
+                f"同篇文章的 group_id 不一致：{record.article_id} "
+                f"({previous_group}, {record.group_id})"
+            )
         if require_labels and record.label is None:
             raise DatasetError(f"尚未標註：{record.id}")
         labels[record.label] += 1

@@ -1,8 +1,11 @@
 from pathlib import Path
 
+import pytest
+
 from newsveribot.dataset import (
     ArticleRecord,
     ClaimAnnotation,
+    DatasetError,
     audit_annotations,
     blind_sample_annotations,
     prepare_annotations,
@@ -78,6 +81,41 @@ def test_split_keeps_groups_isolated() -> None:
 def test_validation_allows_missing_rationale() -> None:
     record = _annotation(1, 1).model_copy(update={"rationale": None})
     assert validate_annotations([record], require_labels=True).positive == 1
+
+
+@pytest.mark.parametrize("require_labels", [True, False])
+def test_validation_rejects_conflicting_groups_for_one_article(require_labels: bool) -> None:
+    records = [_annotation(1, 0), _annotation(1, 1)]
+    records[1] = records[1].model_copy(update={"group_id": "event_other"})
+    if not require_labels:
+        records = [
+            record.model_copy(update={"label": None, "rationale": None}) for record in records
+        ]
+
+    with pytest.raises(DatasetError, match="group_id 不一致：article_1"):
+        validate_annotations(records, require_labels=require_labels)
+
+
+def test_validation_allows_multiple_articles_in_one_group() -> None:
+    records = [
+        _annotation(article, label).model_copy(update={"group_id": "shared_event"})
+        for article in (1, 2)
+        for label in (0, 1)
+    ]
+
+    summary = validate_annotations(records, require_labels=True)
+
+    assert summary.records == 4
+    assert summary.groups == 1
+    assert summary.positive == summary.negative == 2
+
+
+def test_split_rejects_conflicting_article_groups() -> None:
+    records = [_annotation(group, label) for group in range(12) for label in (0, 1)]
+    records[1] = records[1].model_copy(update={"group_id": "event_other"})
+
+    with pytest.raises(DatasetError, match="group_id 不一致：article_0"):
+        split_annotations(records, seed=42)
 
 
 def test_blind_sample_is_deterministic_and_removes_answers() -> None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from itertools import combinations
 from pathlib import Path
 from typing import Any
 
@@ -40,8 +41,11 @@ class BaselineReport(BaseModel):
     test: ClassificationMetrics
 
 
-def _labeled_xy(records: list[ClaimAnnotation]) -> tuple[list[str], list[int]]:
-    validate_annotations(records, require_labels=True)
+def _labeled_xy(records: list[ClaimAnnotation], *, split_name: str) -> tuple[list[str], list[int]]:
+    try:
+        validate_annotations(records, require_labels=True)
+    except DatasetError as exc:
+        raise DatasetError(f"{split_name} split：{exc}") from exc
     texts: list[str] = []
     labels: list[int] = []
     for record in records:
@@ -49,7 +53,25 @@ def _labeled_xy(records: list[ClaimAnnotation]) -> tuple[list[str], list[int]]:
             raise DatasetError(f"尚未標註：{record.id}")
         texts.append(record.text)
         labels.append(record.label)
+    if set(labels) != {0, 1}:
+        raise DatasetError(f"{split_name} split 必須同時包含正例與反例")
     return texts, labels
+
+
+def _validate_split_isolation(splits: dict[str, list[ClaimAnnotation]]) -> None:
+    identifiers = {
+        name: {
+            "group_id": {record.group_id for record in records},
+            "article_id": {record.article_id for record in records},
+            "id": {record.id for record in records},
+        }
+        for name, records in splits.items()
+    }
+    for left, right in combinations(identifiers, 2):
+        for field, values in identifiers[left].items():
+            overlap = values & identifiers[right][field]
+            if overlap:
+                raise DatasetError(f"{left}/{right} split 的 {field} 重複：{min(overlap)}")
 
 
 def _classification_metrics(
@@ -113,11 +135,10 @@ def train_baseline(
     seed: int,
     target_recall: float,
 ) -> tuple[dict[str, Any], BaselineReport]:
-    train_texts, train_labels = _labeled_xy(train_records)
-    dev_texts, dev_labels = _labeled_xy(dev_records)
-    test_texts, test_labels = _labeled_xy(test_records)
-    if set(train_labels) != {0, 1}:
-        raise DatasetError("train split 必須同時包含正例與反例")
+    train_texts, train_labels = _labeled_xy(train_records, split_name="train")
+    dev_texts, dev_labels = _labeled_xy(dev_records, split_name="dev")
+    test_texts, test_labels = _labeled_xy(test_records, split_name="test")
+    _validate_split_isolation({"train": train_records, "dev": dev_records, "test": test_records})
 
     pipeline: Pipeline[Any] = Pipeline(
         [

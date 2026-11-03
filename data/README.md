@@ -51,3 +51,5 @@ articles.jsonl
 ```
 
 切分會以 `group_id` 為單位，並要求每個 split 都同時具有正例與反例。閾值只在 dev set 選擇，test set 不參與模型或閾值調整。
+
+同一 `article_id` 的所有句子必須使用相同的 `group_id`。即使直接提供自行整理的 `train.jsonl`、`dev.jsonl` 與 `test.jsonl`，訓練前仍會驗證每個 split 非空、已完整標註且同時包含正例與反例，並拒絕跨 split 重複的 `group_id`、`article_id` 或標註 `id`。錯誤訊息會指出有問題的 split 與識別碼；請修正群組與資料切分後重新訓練。
